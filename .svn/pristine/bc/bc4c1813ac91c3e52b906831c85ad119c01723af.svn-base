@@ -1,4 +1,0 @@
-@CHARSET "UTF-8";
-.layui-input-block {
-	width:220px;
-}
