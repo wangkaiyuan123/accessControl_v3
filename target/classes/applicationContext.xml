@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:aop="http://www.springframework.org/schema/aop"
+        xmlns:tx="http://www.springframework.org/schema/tx"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+        
+    <!-- 自动扫描dao和service包(自动注入) -->
+    <context:component-scan base-package="com.dhht.dao,com.dhht.service,com.dhht.action"/>
+    <!-- 获得spring bean  -->
+	<bean class="com.dhht.common.SpringBeanUtil"/>
+	
+	<!-- 定义Hibernate的SessionFactory -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <!-- 依赖注入数据源dataSource -->
+        <property name="dataSource" ref="dataSource" />
+        <!-- 自动扫描注解方式配置的hibernate类文件：映射 -->
+        <property name="packagesToScan">
+            <list>
+                <value>com.dhht.entity</value>
+            </list>
+        </property>
+        <property name="hibernateProperties">
+			<props>
+				<!-- 指定Hibernate的连接方言 -->
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.show_sql">false</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext
+				</prop>
+			</props>
+		</property>
+    </bean>
+    <!-- 定义使用C3P0连接池的数据源 -->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <!-- 指定连接数据库的JDBC驱动 -->
+        <property name="driverClass" value="com.mysql.jdbc.Driver" />
+        <!-- 连接数据库所用的URL -->
+        <property name="jdbcUrl" value="jdbc:mysql://127.0.0.1:3306/db_accesscontrol2?useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=UTF-8&amp;autoReconnect=true" />  
+<!--         <property name="jdbcUrl" value="jdbc:mysql://10.0.0.21:8739/db_accesscontrol2?useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=UTF-8&amp;autoReconnect=true" />  -->
+
+        <!-- 连接数据库的用户名,密码 -->
+<!--         <property name="user" value="db_accesscontrol2" /> -->
+        <property name="user" value="root" /> 
+<!--         <property name="password" value="829173 " />  -->
+        <property name="password" value="123456" />
+        <!-- 设置数据库连接池的初始化时的连接数 -->
+        <property name="initialPoolSize" value="5" />
+        <!-- 设置数据库连接池的最小连接数 -->
+        <property name="minPoolSize" value="5" />
+        <!-- 设置数据库连接池的最大连接数 -->
+        <property name="maxPoolSize" value="100" />
+        <!-- 设置数据库连接池的连接的最大空闲时间,单位为秒 -->
+        <property name="maxIdleTime" value="1800" />
+    </bean>
+    
+        <bean id="sessionBean" class="com.dhht.mina.job.SessionBean" />
+    <bean id="handler" class="com.dhht.mina.server.MyServerHandler" ></bean>
+    
+<!-- 累加数据包解码器：解决丢包、粘包问题 -->
+<bean id="codec" class="org.apache.mina.filter.codec.ProtocolCodecFilter">
+	<constructor-arg>
+		<bean class="com.dhht.mina.server.MyProtocalCodecFactory">
+			<constructor-arg index="0">
+				<bean class="com.dhht.mina.server.MyProtocalEncoder"></bean>
+			</constructor-arg>
+			<constructor-arg index="1">
+				<bean class="com.dhht.mina.server.MyProtocalDecoder"></bean>
+			</constructor-arg>
+		</bean>
+	</constructor-arg>
+</bean>
+
+    <!-- 多线程处理过滤器，为后面的操作开启多线程，一般放在编解码过滤器之后，开始业务逻辑处理 -->
+    <bean id="executors" class="org.apache.mina.filter.executor.ExecutorFilter"/>
+    
+    <!-- Mina自带日志过滤器 默认级别为debug -->
+    <bean id="loggerFilter" class="org.apache.mina.filter.logging.LoggingFilter">
+    	<property name="messageReceivedLogLevel" ref="info"></property>
+    	<property name="exceptionCaughtLogLevel" ref="info"></property>
+    </bean>
+    
+    <!-- 枚举类型 依赖注入  需要先通过此类进行类型转换-->
+    <bean id="info" class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean">    
+        <property name="staticField" value="org.apache.mina.filter.logging.LogLevel.INFO" />    
+    </bean>
+    <bean id="filterChainBuilder" class="org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder">  
+ 		<property name="filters">  
+   			<map>
+     			<entry key="codec" value-ref="codec"/>
+     			<entry key="logger" value-ref="loggerFilter"/>
+     			<entry key="executors" value-ref="executors"/>
+   			</map>  
+ 		</property>  
+	</bean>
+	
+<!-- 监听端口 -->
+<bean id="defaultLocalAddress" class="java.net.InetSocketAddress">
+	<constructor-arg index="0" value="5551"></constructor-arg>
+</bean>
+
+	<!-- session config 通过工厂方法注入 -->
+    <bean id="sessionConfig" factory-bean="ioAcceptor" factory-method="getSessionConfig" >
+        <!-- 配置空闲时间，单位秒 -->
+        <property name="readerIdleTime" value="35"/>
+        <!-- 配置缓冲区单位字节-->
+        <property name="minReadBufferSize" value="512"/>
+        <property name="maxReadBufferSize" value="1024"/>
+    </bean>
+<bean id="ioAcceptor" class="org.apache.mina.transport.socket.nio.NioSocketAcceptor"
+init-method="bind" destroy-method="unbind">
+<!-- 默认启用的线程个数是CPU 的核数+1， -->
+ <!--<constructor-arg index="0" value="10"></constructor-arg>-->
+ <property name="defaultLocalAddress" ref="defaultLocalAddress" />  
+ <property name="handler" ref="handler" />  
+ <property name="filterChainBuilder" ref="filterChainBuilder" />  
+</bean>
+    
+    
+    
+    <!-- 定义事务管理 -->
+    <bean id="transactionManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    
+    <!-- aop拦截配置 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+    <aop:config proxy-target-class="true">
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* com.dhht.service..*(..))" order="2"/>
+    </aop:config>
+
+    <!-- 事务拦截规则 -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true" />
+            <tx:method name="find*" read-only="true" />
+            <tx:method name="list*" read-only="true" />
+            <tx:method name="load*" read-only="true" />
+            <tx:method name="search*" read-only="true" />
+            <tx:method name="saveCursor" propagation="REQUIRES_NEW"/>
+            <tx:method name="saveImportInfo" propagation="REQUIRES_NEW"/>
+            <tx:method name="*" rollback-for="Exception"/>
+        </tx:attributes>
+    </tx:advice>
+</beans>

@@ -1,0 +1,79 @@
+.modal {
+    position:absolute;
+    top:50%;
+    left:50%;
+    z-index:1001;
+    height:0;
+}
+.modalShadow {
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1000;
+    background:#000;
+    opacity:0.5;
+    filter: Alpha(opacity=50);
+    display:none;
+}
+.modalShadowSec {
+	position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:#000;
+    opacity:0.5;
+    filter: Alpha(opacity=50);
+    display:none;
+	z-index:1005;
+}
+.modal_title {
+    /*模态框头部样式*/
+    height:44px;
+    line-height:44px;
+    width:100%;
+    background:#009F95;
+    color:#fff;
+    border-top-right-radius: 4px;
+    -webkit-border-top-right-radius: 4px;
+    -moz-border-top-right-radius:4px;
+    border-top-left-radius: 4px;
+    -webkit-border-top-left-radius: 4px;
+    -moz-border-top-left-radius:4px;
+}
+.modal_title>p {
+    padding-left:10px;
+    float:left;
+}
+.modal_title>i {
+    float:right;
+    padding-right:5px;
+}
+.modal_title>i:hover {
+    cursor:pointer;
+    color:#ddd;
+}
+.modal_content {
+    /*模态框中间样式*/
+    width:100%;
+    background:#fff;
+}
+.modal_footer {
+    /*模态框尾部样式*/
+    width:100%;
+    height:50px;
+    line-height:50px;
+    background:#fff;
+    text-align:center;
+    border-bottom-right-radius: 4px;
+    -webkit-border-bottom-right-radius: 4px;
+    -moz-border-bottom-right-radius:4px;
+    border-bottom-left-radius: 4px;
+    -webkit-border-bottom-left-radius: 4px;
+    -moz-border-bottom-left-radius:4px;
+}
+.modal_footer button:hover {
+    cursor:pointer;
+}

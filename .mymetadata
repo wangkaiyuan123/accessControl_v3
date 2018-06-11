@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="accessControl_v3"
+  id="myeclipse.1508719957506"
+  context-root="/"
+  j2ee-spec="6.0"
+  archive="accessControl_v3.war">
+  <attributes>
+    <attribute name="webrootdir" value="src/main/webapp" />
+  </attributes>
+</project-module>
+
